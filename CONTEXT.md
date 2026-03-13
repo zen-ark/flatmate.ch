@@ -1,0 +1,1 @@
+# flatmate.ch Context\n\n## 💡 Rule of Context\nIf it's not in this file, the AI doesn't know it.\n\n## 🚀 Project Goal\n[Describe the app's purpose here]\n\n## 🛠 Tech Stack\n- [TBD]\n\n## 🌊 Active Components\n- None yet\n\n## 🔗 Open Loops\n- Initial setup
