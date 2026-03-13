@@ -3,17 +3,17 @@
 import { useMemo, useState } from "react";
 import {
   MapContainer,
-  Marker,
   TileLayer,
-  Tooltip,
+  useMapEvents,
   ZoomControl,
 } from "react-leaflet";
-import { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Listing } from "@/lib/mvp-data";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { VibeTag } from "@/components/mvp/vibe-tag";
 import { Banknote, Calendar, ChevronLeft, MapPin, Ruler, Users, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const CITY_COORDINATES: Record<string, [number, number]> = {
   "St. Gallen": [47.4245, 9.3767],
@@ -25,21 +25,98 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   Lausanne: [46.5197, 6.6323],
 };
 
-function markerIcon(isActive: boolean, isHovered: boolean) {
-  const classes = [
-    "feed-map-pin",
-    isActive ? "feed-map-pin--active" : "",
-    isHovered ? "feed-map-pin--hovered" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+function MapMarkerOverlay({
+  listings,
+  listingCoords,
+  activeListingId,
+  hoveredListingId,
+  onHover,
+  onLeave,
+  onSelect,
+}: {
+  listings: Listing[];
+  listingCoords: Record<string, [number, number]>;
+  activeListingId: string | null;
+  hoveredListingId: string | null;
+  onHover: (listingId: string) => void;
+  onLeave: (listingId: string) => void;
+  onSelect: (listingId: string) => void;
+}) {
+  const [renderVersion, setRenderVersion] = useState(0);
 
-  return divIcon({
-    className: "feed-map-pin-shell",
-    html: `<span class="${classes}" />`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+  const map = useMapEvents({
+    move: () => setRenderVersion((v) => v + 1),
+    zoom: () => setRenderVersion((v) => v + 1),
+    resize: () => setRenderVersion((v) => v + 1),
   });
+
+  const markerPoints = useMemo(() => {
+    void renderVersion;
+    return listings.reduce<Record<string, { x: number; y: number }>>((acc, listing) => {
+      const coords = listingCoords[listing.id];
+      if (!coords) return acc;
+      const point = map.latLngToContainerPoint(coords);
+      acc[listing.id] = { x: point.x, y: point.y };
+      return acc;
+    }, {});
+  }, [listings, listingCoords, map, renderVersion]);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[800]">
+      {listings.map((listing) => {
+        const marker = markerPoints[listing.id];
+        if (!marker) return null;
+
+        const isHovered = hoveredListingId === listing.id;
+        const isActive = activeListingId === listing.id;
+
+        return (
+          <div
+            key={listing.id}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{
+              left: marker.x,
+              top: marker.y,
+              zIndex: isActive ? 40 : isHovered ? 30 : 20,
+            }}
+          >
+            {(isHovered || isActive) && (
+              <Card className="pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 w-56 -translate-x-1/2 border-border/70 bg-popover/95 py-0 shadow-xl">
+                <CardContent className="p-3">
+                  <p className="truncate text-xs font-semibold">{listing.title}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {listing.location.neighborhood}, {listing.location.city}
+                  </p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+                    <Banknote className="size-3" /> CHF {listing.room.price}/mo
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            <Button
+              type="button"
+              size="icon-sm"
+              variant={isActive ? "default" : "outline"}
+              onMouseEnter={() => onHover(listing.id)}
+              onMouseLeave={() => onLeave(listing.id)}
+              onClick={() => onSelect(listing.id)}
+              className={cn(
+                "pointer-events-auto rounded-full border-2 shadow-lg transition-transform",
+                isActive
+                  ? "border-background"
+                  : "border-primary/60 bg-background text-primary hover:bg-background",
+                isHovered && !isActive && "scale-110"
+              )}
+              aria-label={`Open ${listing.title}`}
+            >
+              <MapPin className="size-3.5" />
+            </Button>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function FeedMap({
@@ -232,105 +309,24 @@ export function FeedMap({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-
-          {listings.map((listing) => {
-            const isHovered = hoveredListingId === listing.id;
-            const isActive = activeListingId === listing.id;
-
-            return (
-              <Marker
-                key={listing.id}
-                position={listingCoords[listing.id]}
-                icon={markerIcon(isActive, isHovered)}
-                zIndexOffset={isActive ? 1800 : isHovered ? 1400 : 0}
-                eventHandlers={{
-                  mouseover: () => setHoveredListingId(listing.id),
-                  mouseout: () =>
-                    setHoveredListingId((current) =>
-                      current === listing.id ? null : current
-                    ),
-                  click: () => {
-                    setActiveListingId(listing.id);
-                    setIsDetailOpen(true);
-                  },
-                }}
-              >
-                {(isHovered || isActive) && (
-                  <Tooltip
-                    direction="top"
-                    offset={[0, -16]}
-                    opacity={1}
-                    permanent
-                    className="feed-map-tooltip"
-                  >
-                    <div className="min-w-44">
-                      <p className="truncate text-xs font-semibold">{listing.title}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {listing.location.neighborhood}, {listing.location.city}
-                      </p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                        <Banknote className="size-3" /> CHF {listing.room.price}/mo
-                      </p>
-                    </div>
-                  </Tooltip>
-                )}
-              </Marker>
-            );
-          })}
+          <MapMarkerOverlay
+            listings={listings}
+            listingCoords={listingCoords}
+            activeListingId={activeListingId}
+            hoveredListingId={hoveredListingId}
+            onHover={setHoveredListingId}
+            onLeave={(listingId) =>
+              setHoveredListingId((current) =>
+                current === listingId ? null : current
+              )
+            }
+            onSelect={(listingId) => {
+              setActiveListingId(listingId);
+              setIsDetailOpen(true);
+            }}
+          />
         </MapContainer>
       </div>
-
-      <style jsx global>{`
-        .leaflet-pane,
-        .leaflet-marker-pane,
-        .leaflet-tooltip-pane {
-          z-index: 700;
-        }
-
-        .leaflet-tooltip-pane {
-          z-index: 1800;
-        }
-
-        .feed-map-tooltip {
-          border: 1px solid hsl(var(--border));
-          border-radius: 0.75rem;
-          background: hsl(var(--popover));
-          color: hsl(var(--popover-foreground));
-          box-shadow: 0 12px 24px hsl(var(--foreground) / 0.1);
-          padding: 0.5rem 0.625rem;
-        }
-
-        .feed-map-tooltip:before {
-          border-top-color: hsl(var(--border)) !important;
-        }
-
-        .feed-map-pin-shell {
-          background: transparent !important;
-          border: none !important;
-        }
-
-        .feed-map-pin {
-          display: block;
-          width: 1rem;
-          height: 1rem;
-          border-radius: 9999px;
-          border: 2px solid hsl(var(--background));
-          background: hsl(var(--foreground));
-          box-shadow: 0 0 0 3px hsl(var(--background) / 0.8);
-          transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
-        }
-
-        .feed-map-pin--hovered {
-          transform: scale(1.16);
-          box-shadow: 0 0 0 4px hsl(var(--primary) / 0.28);
-        }
-
-        .feed-map-pin--active {
-          transform: scale(1.2);
-          background: hsl(var(--primary));
-          box-shadow: 0 0 0 5px hsl(var(--primary) / 0.35);
-        }
-      `}</style>
     </section>
   );
 }
