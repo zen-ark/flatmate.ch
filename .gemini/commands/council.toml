@@ -1,0 +1,8 @@
+description = "Spawns 3 separate agents to analyze an idea."
+
+prompt = """
+I need a full Council review. Delegate these tasks to separate sub-agents:
+1. Call @.claude/agents/optimist.md to analyze: {{args}}
+2. Call @.claude/agents/skeptic.md to analyze: {{args}}
+3. Summarize their findings and have @.claude/agents/strategist.md provide the final plan.
+"""
