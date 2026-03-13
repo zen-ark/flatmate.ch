@@ -7,6 +7,7 @@ import { listings } from "@/lib/mvp-data";
 import { FeedCard } from "@/components/mvp/feed-card";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Sparkles } from "lucide-react";
+import { calculateMatchScore } from "@/lib/matching";
 
 const STORAGE_KEY = "flatmate-vibe";
 const FeedMap = dynamic(
@@ -14,7 +15,7 @@ const FeedMap = dynamic(
   { ssr: false }
 );
 
-function useVibeSelections(): string[] {
+function useVibeSelections(): Record<string, any> {
   const subscribe = useCallback((callback: () => void) => {
     window.addEventListener("storage", callback);
     return () => window.removeEventListener("storage", callback);
@@ -30,28 +31,30 @@ function useVibeSelections(): string[] {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return useMemo(() => {
-    if (!raw) return [];
+    if (!raw) return {};
     try {
-      const parsed = JSON.parse(raw) as Record<string, string>;
-      return Object.values(parsed);
+      return JSON.parse(raw);
     } catch {
-      return [];
+      return {};
     }
   }, [raw]);
 }
 
 export default function FeedPage() {
-  const userVibes = useVibeSelections();
+  const userSelections = useVibeSelections();
   const [view, setView] = useState<"list" | "map">("list");
 
   const sorted = useMemo(() => {
-    if (userVibes.length === 0) return listings;
-    return [...listings].sort((a, b) => {
-      const aMatches = a.vibeTags.filter((t) => userVibes.includes(t)).length;
-      const bMatches = b.vibeTags.filter((t) => userVibes.includes(t)).length;
-      return bMatches - aMatches;
-    });
-  }, [userVibes]);
+    // Return typed listings with scores
+    const withScores = listings.map(l => ({
+      ...l,
+      score: calculateMatchScore(userSelections, l)
+    }));
+
+    return withScores.sort((a, b) => b.score - a.score);
+  }, [userSelections]);
+
+  const hasSelections = Object.keys(userSelections).length > 0;
 
   return (
     <div className={view === "map" ? "h-screen overflow-hidden bg-background" : "min-h-screen bg-background"}>
@@ -91,7 +94,7 @@ export default function FeedPage() {
 
       <main className={view === "map" ? "h-[calc(100vh-3.5rem)]" : "mx-auto max-w-5xl px-6 py-8"}>
         {/* Summary */}
-        {view === "list" && userVibes.length > 0 && (
+        {view === "list" && hasSelections && (
           <div className="mb-8 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
             <Sparkles className="size-4 text-primary" />
             <span>
@@ -107,12 +110,12 @@ export default function FeedPage() {
               <FeedCard
                 key={listing.id}
                 listing={listing}
-                userVibes={userVibes}
+                userSelections={userSelections}
               />
             ))}
           </div>
         ) : (
-          <FeedMap listings={sorted} userVibes={userVibes} />
+          <FeedMap listings={sorted} userSelections={userSelections} />
         )}
 
         {/* End */}

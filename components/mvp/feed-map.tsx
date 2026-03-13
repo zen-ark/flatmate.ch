@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import {
   MapContainer,
   Marker,
   TileLayer,
-  Tooltip,
   ZoomControl,
 } from "react-leaflet";
 import { divIcon } from "leaflet";
@@ -13,7 +14,7 @@ import "leaflet/dist/leaflet.css";
 import type { Listing } from "@/lib/mvp-data";
 import { Button } from "@/components/ui/button";
 import { VibeTag } from "@/components/mvp/vibe-tag";
-import { Banknote, Calendar, ChevronLeft, MapPin, Ruler, Users, X } from "lucide-react";
+import { Banknote, Calendar, ChevronLeft, ChevronRight, MapPin, Ruler, Sparkles, Users, X } from "lucide-react";
 
 const CITY_COORDINATES: Record<string, [number, number]> = {
   "St. Gallen": [47.4245, 9.3767],
@@ -25,33 +26,38 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   Lausanne: [46.5197, 6.6323],
 };
 
-function markerIcon(isActive: boolean, isHovered: boolean) {
+function markerIcon(price: number, isActive: boolean, isHovered: boolean, score?: number) {
   const classes = [
-    "feed-map-pin",
-    isActive ? "feed-map-pin--active" : "",
-    isHovered ? "feed-map-pin--hovered" : "",
+    "feed-map-pill",
+    isActive ? "feed-map-pill--active" : "",
+    isHovered ? "feed-map-pill--hovered" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
+  const html = `
+    <div class="${classes}">
+      <span class="pill-price">CHF ${price}</span>
+      ${score && score > 80 ? `<span class="pill-dot"></span>` : ""}
+    </div>
+  `;
+
   return divIcon({
-    className: "feed-map-pin-shell",
-    html: `<span class="${classes}" />`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    className: "feed-map-pill-shell",
+    html: html,
+    iconSize: [64, 32],
+    iconAnchor: [32, 16],
   });
 }
 
 export function FeedMap({
   listings,
-  userVibes,
+  userSelections,
 }: {
-  listings: Listing[];
-  userVibes: string[];
+  listings: (Listing & { score?: number })[];
+  userSelections: Record<string, any>;
 }) {
-  const [activeListingId, setActiveListingId] = useState<string | null>(
-    listings[0]?.id ?? null
-  );
+  const [activeListingId, setActiveListingId] = useState<string | null>(null);
   const [hoveredListingId, setHoveredListingId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -79,29 +85,31 @@ export function FeedMap({
     listings.find((listing) => listing.id === activeListingId) ?? null;
 
   return (
-    <section className="grid h-full w-full overflow-hidden md:grid-cols-[420px_minmax(0,1fr)]">
+    <section className="grid h-full w-full overflow-hidden md:grid-cols-[340px_minmax(0,1fr)]">
       <aside className="z-[1000] h-full border-r border-border/70 bg-background/95 backdrop-blur-md">
         <div className="flex h-full flex-col p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground">
-              {isDetailOpen && activeListing ? "Selected listing" : "Listings on map"}
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80">
+              {isDetailOpen ? "Selected WG" : "Nearby WGs"}
             </h2>
             {isDetailOpen && (
               <Button
                 variant="ghost"
                 size="sm"
+                className="h-7 px-2 text-[11px] font-bold"
                 onClick={() => setIsDetailOpen(false)}
               >
-                <ChevronLeft className="size-4" />
-                Back
+                <ChevronLeft className="size-3 mr-1" />
+                Back to list
               </Button>
             )}
           </div>
 
           {!isDetailOpen && (
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
               {listings.map((listing) => {
                 const isActive = activeListingId === listing.id;
+                const score = listing.score ?? 0;
                 return (
                   <button
                     key={listing.id}
@@ -111,28 +119,31 @@ export function FeedMap({
                       setIsDetailOpen(true);
                     }}
                     onMouseEnter={() => setHoveredListingId(listing.id)}
-                    onMouseLeave={() =>
-                      setHoveredListingId((current) =>
-                        current === listing.id ? null : current
-                      )
-                    }
-                    className={`w-full rounded-xl border p-3 text-left transition-colors ${
+                    onMouseLeave={() => setHoveredListingId(null)}
+                    className={`group w-full rounded-xl border p-3 text-left transition-all duration-200 ${
                       isActive
-                        ? "border-primary/50 bg-primary/5"
-                        : "border-border bg-card hover:border-primary/30"
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border/60 bg-card hover:border-primary/40 hover:shadow-md"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold">{listing.title}</p>
-                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="size-3" />
-                          {listing.location.neighborhood}, {listing.location.city}
+                    <div className="flex items-center justify-between gap-3">
+                       <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{listing.title}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground font-medium">
+                          {listing.location.neighborhood}
                         </p>
                       </div>
-                      <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium">
-                        CHF {listing.room.price}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="text-[11px] font-black">
+                          CHF {listing.room.price}
+                        </span>
+                        {score > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Sparkles className={`size-2.5 ${score > 80 ? "text-primary" : "text-muted-foreground/50"}`} />
+                            <span className="text-[10px] font-bold text-muted-foreground">{score}%</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </button>
                 );
@@ -141,77 +152,57 @@ export function FeedMap({
           )}
 
           {isDetailOpen && activeListing && (
-            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold tracking-tight">
-                    {activeListing.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {activeListing.location.neighborhood}, {activeListing.location.city}
-                  </p>
-                </div>
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  onClick={() => setIsDetailOpen(false)}
-                  aria-label="Close selected listing"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-
-              <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                {activeListing.description}
-              </p>
-
-              <div className="mb-5 flex flex-wrap gap-2">
-                {activeListing.vibeTags.map((vibe) => (
-                  <VibeTag
-                    key={vibe}
-                    vibeId={vibe}
-                    highlight={userVibes.includes(vibe)}
+            <div className="min-h-0 flex-1 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+              <Link 
+                href={`/app/feed/${activeListing.id}`}
+                className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all hover:border-primary/40 hover:shadow-xl"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <Image
+                    src={activeListing.images.room}
+                    alt={activeListing.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                ))}
-              </div>
-
-              <div className="mb-5 grid gap-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
-                  <Banknote className="size-4" /> CHF {activeListing.room.price}/month
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
-                  <Ruler className="size-4" /> {activeListing.room.size} m²
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
-                  <Calendar className="size-4" />
-                  Available{" "}
-                  {new Date(activeListing.room.available).toLocaleDateString("de-CH", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-
-              <div className="rounded-xl border border-border/60 bg-card p-3">
-                <div className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Users className="size-3.5" />
-                  Current flatmates
-                </div>
-                <div className="grid gap-2">
-                  {activeListing.flatmates.map((flatmate) => (
-                    <div
-                      key={flatmate.name}
-                      className="rounded-lg bg-muted/70 px-3 py-2 text-sm"
-                    >
-                      <span className="font-medium">{flatmate.name}</span>
-                      <span className="text-muted-foreground">
-                        {" "}
-                        &middot; {flatmate.age} &middot; {flatmate.occupation}
-                      </span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  {activeListing.score !== undefined && (
+                    <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary/90 px-2 py-1 text-[10px] font-bold text-primary-foreground backdrop-blur-md shadow-lg">
+                      <Sparkles className="size-2.5" />
+                      {activeListing.score}% Match
                     </div>
-                  ))}
+                  )}
+                  <div className="absolute bottom-3 left-3 right-3 translate-y-2 opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                     <span className="text-[10px] font-bold text-white uppercase tracking-wider">Tap to see full details</span>
+                  </div>
                 </div>
+                
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-bold leading-tight group-hover:text-primary transition-colors">
+                      {activeListing.title}
+                    </h3>
+                  </div>
+                  
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                    <MapPin className="size-3 text-primary/60" />
+                    {activeListing.location.neighborhood}, {activeListing.location.city}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-sm font-black">CHF {activeListing.room.price}</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">/mo</span>
+                    </div>
+                    <ChevronRight className="size-4 text-primary transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </Link>
+              
+              <div className="mt-6 flex flex-col items-center justify-center p-4 text-center rounded-2xl bg-muted/30 border border-dashed border-border/80">
+                 <Users className="size-5 text-muted-foreground/40 mb-2" />
+                 <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
+                   Join {activeListing.flatmates.length} people in this <span className="text-foreground font-bold">{activeListing.room.size}m²</span> flat.
+                 </p>
               </div>
             </div>
           )}
@@ -241,40 +232,17 @@ export function FeedMap({
               <Marker
                 key={listing.id}
                 position={listingCoords[listing.id]}
-                icon={markerIcon(isActive, isHovered)}
+                icon={markerIcon(listing.room.price, isActive, isHovered, listing.score)}
                 zIndexOffset={isActive ? 1800 : isHovered ? 1400 : 0}
                 eventHandlers={{
                   mouseover: () => setHoveredListingId(listing.id),
-                  mouseout: () =>
-                    setHoveredListingId((current) =>
-                      current === listing.id ? null : current
-                    ),
+                  mouseout: () => setHoveredListingId(null),
                   click: () => {
                     setActiveListingId(listing.id);
                     setIsDetailOpen(true);
                   },
                 }}
-              >
-                {(isHovered || isActive) && (
-                  <Tooltip
-                    direction="top"
-                    offset={[0, -16]}
-                    opacity={1}
-                    permanent
-                    className="feed-map-tooltip"
-                  >
-                    <div className="min-w-44">
-                      <p className="truncate text-xs font-semibold">{listing.title}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {listing.location.neighborhood}, {listing.location.city}
-                      </p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                        <Banknote className="size-3" /> CHF {listing.room.price}/mo
-                      </p>
-                    </div>
-                  </Tooltip>
-                )}
-              </Marker>
+              />
             );
           })}
         </MapContainer>
@@ -282,55 +250,74 @@ export function FeedMap({
 
       <style jsx global>{`
         .leaflet-pane,
-        .leaflet-marker-pane,
-        .leaflet-tooltip-pane {
+        .leaflet-marker-pane {
           z-index: 700;
         }
 
-        .leaflet-tooltip-pane {
-          z-index: 1800;
-        }
-
-        .feed-map-tooltip {
-          border: 1px solid hsl(var(--border));
-          border-radius: 0.75rem;
-          background: hsl(var(--popover));
-          color: hsl(var(--popover-foreground));
-          box-shadow: 0 12px 24px hsl(var(--foreground) / 0.1);
-          padding: 0.5rem 0.625rem;
-        }
-
-        .feed-map-tooltip:before {
-          border-top-color: hsl(var(--border)) !important;
-        }
-
-        .feed-map-pin-shell {
+        .feed-map-pill-shell {
           background: transparent !important;
           border: none !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .feed-map-pin {
-          display: block;
-          width: 1rem;
-          height: 1rem;
+        .feed-map-pill {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
           border-radius: 9999px;
-          border: 2px solid hsl(var(--background));
-          background: hsl(var(--foreground));
-          box-shadow: 0 0 0 3px hsl(var(--background) / 0.8);
-          transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+          padding: 6px 12px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04);
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+          position: relative;
+          white-space: nowrap;
+          border: 1px solid transparent;
         }
 
-        .feed-map-pin--hovered {
-          transform: scale(1.16);
-          box-shadow: 0 0 0 4px hsl(var(--primary) / 0.28);
+        .pill-price {
+          font-size: 14px;
+          font-weight: 800;
+          color: #222;
+          letter-spacing: -0.02em;
         }
 
-        .feed-map-pin--active {
-          transform: scale(1.2);
+        .pill-dot {
+          position: absolute;
+          top: -3px;
+          right: -3px;
+          width: 8px;
+          height: 8px;
           background: hsl(var(--primary));
-          box-shadow: 0 0 0 5px hsl(var(--primary) / 0.35);
+          border: 2px solid white;
+          border-radius: 9999px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .feed-map-pill--hovered {
+          transform: scale(1.15);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+          z-index: 2000;
+        }
+
+        .feed-map-pill--active {
+          background: #222;
+          transform: scale(1.1);
+          z-index: 2001;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .feed-map-pill--active .pill-price {
+          color: white;
+        }
+
+        .feed-map-pill--active .pill-dot {
+          border-color: #222;
         }
       `}</style>
     </section>
   );
 }
+

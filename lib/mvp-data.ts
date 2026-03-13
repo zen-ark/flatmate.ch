@@ -34,6 +34,7 @@ export type Listing = {
   id: string;
   title: string;
   vibeTags: string[];
+  vibeValues?: Record<string, any>; // maps categoryId -> { sliderId: value } or categoryId -> choiceId
   flatmates: Flatmate[];
   images: {
     room: string;
@@ -143,6 +144,13 @@ export const listings: Listing[] = [
     id: "wg-001",
     title: "Chill Creative Collective",
     vibeTags: ["creative-chaos", "social-butterfly", "lively", "night-owl", "cook-together"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 3, bathroom: 1 },
+      "social-battery": { "alone-time": 1 },
+      "guest-policy": { guests: 4 },
+      sharing: { "sharing-level": 80 },
+      "noise-level": "lively"
+    },
     flatmates: [
       { name: "Lina", age: 26, occupation: "Graphic Designer", since: "2 years" },
       { name: "Marco", age: 28, occupation: "Musician", since: "1 year" },
@@ -160,6 +168,13 @@ export const listings: Listing[] = [
     id: "wg-002",
     title: "Morning Run & Meal Prep Squad",
     vibeTags: ["tidy", "balanced", "low-key", "early-bird", "meal-prep"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 3, bathroom: 1 },
+      "social-battery": { "alone-time": 1 },
+      "guest-policy": { guests: 4 },
+      sharing: { "sharing-level": 80 },
+      "noise-level": "lively"
+    },
     flatmates: [
       { name: "Sarah", age: 30, occupation: "Product Manager", since: "3 years" },
       { name: "Jonas", age: 29, occupation: "Physiotherapist", since: "2 years" },
@@ -177,6 +192,13 @@ export const listings: Listing[] = [
     id: "wg-003",
     title: "Study Hard, Play Hard",
     vibeTags: ["tidy", "social-butterfly", "low-key", "flexible", "takeout-lover"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 6, bathroom: 3 },
+      "social-battery": { "alone-time": 2 },
+      "guest-policy": { guests: 1 },
+      sharing: { "sharing-level": 40 },
+      "noise-level": "low-key"
+    },
     flatmates: [
       { name: "Amélie", age: 23, occupation: "Med Student", since: "1 year" },
       { name: "Nils", age: 24, occupation: "Law Student", since: "1 year" },
@@ -195,6 +217,13 @@ export const listings: Listing[] = [
     id: "wg-004",
     title: "Quiet Professional Pad",
     vibeTags: ["spotless", "quiet-homebody", "library-quiet", "early-bird", "meal-prep"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 7, bathroom: 4 },
+      "social-battery": { "alone-time": 5 },
+      "guest-policy": { guests: 0 },
+      sharing: { "sharing-level": 10 },
+      "noise-level": "library-quiet"
+    },
     flatmates: [
       { name: "Thomas", age: 34, occupation: "Architect", since: "4 years" },
     ],
@@ -211,6 +240,13 @@ export const listings: Listing[] = [
     id: "wg-005",
     title: "International Foodie House",
     vibeTags: ["relaxed", "party-mode", "lively", "night-owl", "master-chef"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 7, bathroom: 4 },
+      "social-battery": { "alone-time": 5 },
+      "guest-policy": { guests: 0 },
+      sharing: { "sharing-level": 10 },
+      "noise-level": "library-quiet"
+    },
     flatmates: [
       { name: "Giulia", age: 27, occupation: "Chef", since: "2 years" },
       { name: "Kenji", age: 25, occupation: "Sommelier", since: "1 year" },
@@ -229,6 +265,13 @@ export const listings: Listing[] = [
     id: "wg-006",
     title: "Green Living Co-op",
     vibeTags: ["tidy", "balanced", "low-key", "early-bird", "cook-together"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 2, bathroom: 1 },
+      "social-battery": { "alone-time": 1 },
+      "guest-policy": { guests: 6 },
+      sharing: { "sharing-level": 90 },
+      "noise-level": "lively"
+    },
     flatmates: [
       { name: "Lea", age: 31, occupation: "Sustainability Consultant", since: "3 years" },
       { name: "Fabian", age: 29, occupation: "Urban Farmer", since: "2 years" },
@@ -246,6 +289,13 @@ export const listings: Listing[] = [
     id: "wg-007",
     title: "Tech & Board Game Nights",
     vibeTags: ["relaxed", "social-butterfly", "low-key", "night-owl", "takeout-lover"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 5, bathroom: 2 },
+      "social-battery": { "alone-time": 3 },
+      "guest-policy": { guests: 2 },
+      sharing: { "sharing-level": 70 },
+      "noise-level": "low-key"
+    },
     flatmates: [
       { name: "David", age: 27, occupation: "Software Engineer", since: "2 years" },
       { name: "Yuki", age: 26, occupation: "UX Researcher", since: "1 year" },
@@ -263,6 +313,13 @@ export const listings: Listing[] = [
     id: "wg-008",
     title: "Music & Art Collective",
     vibeTags: ["creative-chaos", "party-mode", "festival-mode", "night-owl", "cook-together"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 4, bathroom: 1 },
+      "social-battery": { "alone-time": 4 },
+      "guest-policy": { guests: 1 },
+      sharing: { "sharing-level": 30 },
+      "noise-level": "low-key"
+    },
     flatmates: [
       { name: "Zara", age: 25, occupation: "DJ / Producer", since: "1 year" },
       { name: "Matteo", age: 27, occupation: "Painter", since: "2 years" },
@@ -281,6 +338,13 @@ export const listings: Listing[] = [
     id: "wg-009",
     title: "Outdoor Adventure Base",
     vibeTags: ["relaxed", "balanced", "lively", "early-bird", "meal-prep"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 1, bathroom: 1 },
+      "social-battery": { "alone-time": 0 },
+      "guest-policy": { guests: 5 },
+      sharing: { "sharing-level": 100 },
+      "noise-level": "festival-mode"
+    },
     flatmates: [
       { name: "Nico", age: 28, occupation: "Mountain Guide", since: "3 years" },
       { name: "Anna", age: 27, occupation: "Veterinarian", since: "2 years" },
@@ -298,6 +362,13 @@ export const listings: Listing[] = [
     id: "wg-010",
     title: "Cozy Sunday Brunch Crew",
     vibeTags: ["tidy", "social-butterfly", "low-key", "flexible", "master-chef"],
+    vibeValues: {
+      "cleanliness-habits": { kitchen: 5, bathroom: 3 },
+      "social-battery": { "alone-time": 2 },
+      "guest-policy": { guests: 3 },
+      sharing: { "sharing-level": 80 },
+      "noise-level": "low-key"
+    },
     flatmates: [
       { name: "Sophie", age: 29, occupation: "Journalist", since: "2 years" },
       { name: "Luca", age: 30, occupation: "Primary School Teacher", since: "3 years" },
