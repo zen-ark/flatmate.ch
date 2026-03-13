@@ -2,7 +2,19 @@ export type VibeCategory = {
   id: string;
   label: string;
   description: string;
-  options: VibeOption[];
+  type: "choice" | "slider";
+  options?: VibeOption[];
+  sliders?: VibeSlider[];
+};
+
+export type VibeSlider = {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  icon?: string;
 };
 
 export type VibeOption = {
@@ -37,57 +49,87 @@ export type Listing = {
 
 export const vibeCategories: VibeCategory[] = [
   {
-    id: "cleanliness",
-    label: "Cleanliness",
-    description: "How tidy is your ideal living space?",
-    options: [
-      { id: "spotless", label: "Spotless", emoji: "✨" },
-      { id: "tidy", label: "Tidy", emoji: "🧹" },
-      { id: "relaxed", label: "Relaxed", emoji: "😌" },
-      { id: "creative-chaos", label: "Creative Chaos", emoji: "🎨" },
+    id: "cleanliness-habits",
+    label: "Sauberkeit",
+    description: "Wie oft schwingst du den Putzlappen?",
+    type: "slider",
+    sliders: [
+      {
+        id: "kitchen",
+        label: "Küche",
+        min: 0,
+        max: 7,
+        step: 1,
+        unit: "x pro Woche",
+      },
+      {
+        id: "bathroom",
+        label: "Bad",
+        min: 0,
+        max: 4,
+        step: 1,
+        unit: "x pro Monat",
+      },
     ],
   },
   {
-    id: "social-energy",
-    label: "Social Energy",
-    description: "How social do you want your flat to be?",
-    options: [
-      { id: "party-mode", label: "Party Mode", emoji: "🎉" },
-      { id: "social-butterfly", label: "Social Butterfly", emoji: "🦋" },
-      { id: "balanced", label: "Balanced", emoji: "⚖️" },
-      { id: "quiet-homebody", label: "Quiet Homebody", emoji: "📖" },
+    id: "social-battery",
+    label: "Social Battery",
+    description: "Wie viele Abende in der Woche hast du gerne für dich alleine?",
+    type: "slider",
+    sliders: [
+      {
+        id: "alone-time",
+        label: "Me-Time",
+        min: 0,
+        max: 7,
+        step: 1,
+        unit: "Abende pro Woche",
+      },
+    ],
+  },
+  {
+    id: "guest-policy",
+    label: "Besuch",
+    description: "Wie oft hast du gerne Gäste oder Übernachtungsbesuch?",
+    type: "slider",
+    sliders: [
+      {
+        id: "guests",
+        label: "Gäste",
+        min: 0,
+        max: 7,
+        step: 1,
+        unit: "Tage pro Woche",
+      },
+    ],
+  },
+  {
+    id: "sharing",
+    label: "Teilen & Gemeinschaft",
+    description: "Was teilst du gerne mit deinen Mitbewohnern?",
+    type: "slider",
+    sliders: [
+      {
+        id: "sharing-level",
+        label: "Teil-Freudigkeit",
+        min: 0,
+        max: 100,
+        step: 10,
+        unit: "% (Alles teilen bis strikt getrennt)",
+      },
     ],
   },
   {
     id: "noise-level",
     label: "Noise Level",
     description: "What's your comfort zone with noise at home?",
+    type: "choice",
     options: [
       { id: "library-quiet", label: "Library Quiet", emoji: "🤫" },
       { id: "low-key", label: "Low Key", emoji: "🎧" },
       { id: "lively", label: "Lively", emoji: "🔊" },
       { id: "festival-mode", label: "Festival Mode", emoji: "🥁" },
-    ],
-  },
-  {
-    id: "schedule",
-    label: "Schedule",
-    description: "When does your day start and end?",
-    options: [
-      { id: "early-bird", label: "Early Bird", emoji: "🌅" },
-      { id: "flexible", label: "Flexible", emoji: "🔄" },
-      { id: "night-owl", label: "Night Owl", emoji: "🦉" },
-    ],
-  },
-  {
-    id: "cooking",
-    label: "Cooking",
-    description: "What's your relationship with the kitchen?",
-    options: [
-      { id: "master-chef", label: "Master Chef", emoji: "👨‍🍳" },
-      { id: "meal-prep", label: "Meal Prep", emoji: "🥗" },
-      { id: "takeout-lover", label: "Takeout Lover", emoji: "🥡" },
-      { id: "cook-together", label: "We Cook Together", emoji: "🍳" },
     ],
   },
 ];
@@ -230,7 +272,7 @@ export const listings: Listing[] = [
 
 export function getVibeLabel(vibeId: string): { label: string; emoji: string } | null {
   for (const category of vibeCategories) {
-    const option = category.options.find((o) => o.id === vibeId);
+    const option = category.options?.find((o) => o.id === vibeId);
     if (option) return { label: option.label, emoji: option.emoji };
   }
   return null;
