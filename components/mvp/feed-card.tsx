@@ -1,4 +1,5 @@
-import { MapPin, Calendar, Ruler, Banknote, Users } from "lucide-react";
+import Image from "next/image";
+import { MapPin, Calendar, Ruler, Banknote, Users, BedDouble, House } from "lucide-react";
 import type { Listing } from "@/lib/mvp-data";
 import { VibeTag } from "./vibe-tag";
 
@@ -36,6 +37,40 @@ export function FeedCard({
 
       {/* Body */}
       <div className="px-5 py-4">
+        {/* Listing photos */}
+        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+          <div className="overflow-hidden rounded-xl border border-border/60">
+            <div className="relative aspect-[4/3]">
+              <Image
+                src={listing.images.room}
+                alt={`Room view for ${listing.title}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 50vw"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 border-t border-border/60 bg-muted/40 px-2.5 py-1.5 text-xs font-medium text-foreground">
+              <BedDouble className="size-3.5" />
+              Room
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-border/60">
+            <div className="relative aspect-[4/3]">
+              <Image
+                src={listing.images.flat}
+                alt={`Entire flat view for ${listing.title}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 50vw"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 border-t border-border/60 bg-muted/40 px-2.5 py-1.5 text-xs font-medium text-foreground">
+              <House className="size-3.5" />
+              Entire flat
+            </div>
+          </div>
+        </div>
+
         {/* Vibe Tags */}
         <div className="mb-4 flex flex-wrap gap-1.5">
           {matchingVibes.map((v) => (
@@ -61,8 +96,17 @@ export function FeedCard({
             {listing.flatmates.map((fm) => (
               <div
                 key={fm.name}
-                className="rounded-lg bg-muted/60 px-3 py-1.5 text-xs"
+                className="inline-flex items-center gap-2 rounded-lg bg-muted/60 px-2 py-1.5 text-xs"
               >
+                <Image
+                  src={`https://api.dicebear.com/9.x/adventurer/png?seed=${encodeURIComponent(
+                    fm.name
+                  )}&size=64`}
+                  alt={`${fm.name} profile picture`}
+                  width={24}
+                  height={24}
+                  className="rounded-full border border-border/60 object-cover"
+                />
                 <span className="font-medium">{fm.name}</span>
                 <span className="text-muted-foreground">
                   {" "}

@@ -23,6 +23,10 @@ export type Listing = {
   title: string;
   vibeTags: string[];
   flatmates: Flatmate[];
+  images: {
+    room: string;
+    flat: string;
+  };
   room: {
     price: number;
     size: number;
@@ -101,6 +105,10 @@ export const listings: Listing[] = [
       { name: "Lina", age: 26, occupation: "Graphic Designer", since: "2 years" },
       { name: "Marco", age: 28, occupation: "Musician", since: "1 year" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/bedroom,interior?lock=101",
+      flat: "https://loremflickr.com/800/520/apartment,living-room,interior?lock=201",
+    },
     room: { price: 850, size: 16, available: "2026-05-01" },
     location: { city: "Zürich", neighborhood: "Kreis 4" },
     description:
@@ -114,6 +122,10 @@ export const listings: Listing[] = [
       { name: "Sarah", age: 30, occupation: "Product Manager", since: "3 years" },
       { name: "Jonas", age: 29, occupation: "Physiotherapist", since: "2 years" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/room,cozy,interior?lock=102",
+      flat: "https://loremflickr.com/800/520/flat,modern,interior?lock=202",
+    },
     room: { price: 920, size: 18, available: "2026-04-15" },
     location: { city: "Zürich", neighborhood: "Wiedikon" },
     description:
@@ -128,6 +140,10 @@ export const listings: Listing[] = [
       { name: "Nils", age: 24, occupation: "Law Student", since: "1 year" },
       { name: "Priya", age: 22, occupation: "CS Student", since: "6 months" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/student-room,bedroom?lock=103",
+      flat: "https://loremflickr.com/800/520/shared-apartment,interior?lock=203",
+    },
     room: { price: 680, size: 14, available: "2026-06-01" },
     location: { city: "Bern", neighborhood: "Länggasse" },
     description:
@@ -140,6 +156,10 @@ export const listings: Listing[] = [
     flatmates: [
       { name: "Thomas", age: 34, occupation: "Architect", since: "4 years" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/minimal-bedroom,interior?lock=104",
+      flat: "https://loremflickr.com/800/520/minimalist-apartment,interior?lock=204",
+    },
     room: { price: 1100, size: 20, available: "2026-04-01" },
     location: { city: "Basel", neighborhood: "Gundeli" },
     description:
@@ -154,6 +174,10 @@ export const listings: Listing[] = [
       { name: "Kenji", age: 25, occupation: "Sommelier", since: "1 year" },
       { name: "Elisa", age: 26, occupation: "Food Blogger", since: "8 months" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/boho-bedroom,interior?lock=105",
+      flat: "https://loremflickr.com/800/520/kitchen,apartment,interior?lock=205",
+    },
     room: { price: 780, size: 15, available: "2026-05-15" },
     location: { city: "Lausanne", neighborhood: "Flon" },
     description:
@@ -167,6 +191,10 @@ export const listings: Listing[] = [
       { name: "Lea", age: 31, occupation: "Sustainability Consultant", since: "3 years" },
       { name: "Fabian", age: 29, occupation: "Urban Farmer", since: "2 years" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/scandinavian-bedroom,room?lock=106",
+      flat: "https://loremflickr.com/800/520/eco-apartment,living-room?lock=206",
+    },
     room: { price: 720, size: 16, available: "2026-04-15" },
     location: { city: "Winterthur", neighborhood: "Altstadt" },
     description:
@@ -180,6 +208,10 @@ export const listings: Listing[] = [
       { name: "David", age: 27, occupation: "Software Engineer", since: "2 years" },
       { name: "Yuki", age: 26, occupation: "UX Researcher", since: "1 year" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/modern-bedroom,desk?lock=107",
+      flat: "https://loremflickr.com/800/520/apartment,workspace,interior?lock=207",
+    },
     room: { price: 900, size: 17, available: "2026-05-01" },
     location: { city: "Zürich", neighborhood: "Oerlikon" },
     description:
@@ -194,6 +226,10 @@ export const listings: Listing[] = [
       { name: "Matteo", age: 27, occupation: "Painter", since: "2 years" },
       { name: "Aisha", age: 24, occupation: "Dancer", since: "6 months" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/artistic-bedroom,interior?lock=108",
+      flat: "https://loremflickr.com/800/520/loft,creative,interior?lock=208",
+    },
     room: { price: 650, size: 13, available: "2026-04-01" },
     location: { city: "Bern", neighborhood: "Matte" },
     description:
@@ -207,6 +243,10 @@ export const listings: Listing[] = [
       { name: "Nico", age: 28, occupation: "Mountain Guide", since: "3 years" },
       { name: "Anna", age: 27, occupation: "Veterinarian", since: "2 years" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/wood-bedroom,mountain-style?lock=109",
+      flat: "https://loremflickr.com/800/520/cabin-apartment,living-room?lock=209",
+    },
     room: { price: 750, size: 18, available: "2026-06-01" },
     location: { city: "St. Gallen", neighborhood: "Centrum" },
     description:
@@ -221,6 +261,10 @@ export const listings: Listing[] = [
       { name: "Luca", age: 30, occupation: "Primary School Teacher", since: "3 years" },
       { name: "Mia", age: 28, occupation: "Nurse", since: "1 year" },
     ],
+    images: {
+      room: "https://loremflickr.com/800/520/bright-bedroom,interior?lock=110",
+      flat: "https://loremflickr.com/800/520/cozy-apartment,sunday-brunch,kitchen?lock=210",
+    },
     room: { price: 820, size: 15, available: "2026-05-01" },
     location: { city: "Luzern", neighborhood: "Neustadt" },
     description:
