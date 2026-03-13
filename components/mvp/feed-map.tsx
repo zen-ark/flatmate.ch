@@ -5,16 +5,16 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   MapContainer,
-  Marker,
   TileLayer,
+  useMapEvents,
   ZoomControl,
 } from "react-leaflet";
-import { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Listing } from "@/lib/mvp-data";
 import { Button } from "@/components/ui/button";
-import { VibeTag } from "@/components/mvp/vibe-tag";
-import { Banknote, Calendar, ChevronLeft, ChevronRight, MapPin, Ruler, Sparkles, Users, X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Banknote, ChevronLeft, ChevronRight, MapPin, Sparkles, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const CITY_COORDINATES: Record<string, [number, number]> = {
   "St. Gallen": [47.4245, 9.3767],
@@ -26,28 +26,96 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   Lausanne: [46.5197, 6.6323],
 };
 
-function markerIcon(price: number, isActive: boolean, isHovered: boolean, score?: number) {
-  const classes = [
-    "feed-map-pill",
-    isActive ? "feed-map-pill--active" : "",
-    isHovered ? "feed-map-pill--hovered" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+function MapMarkerOverlay({
+  listings,
+  listingCoords,
+  activeListingId,
+  hoveredListingId,
+  onHover,
+  onLeave,
+  onSelect,
+}: {
+  listings: Listing[];
+  listingCoords: Record<string, [number, number]>;
+  activeListingId: string | null;
+  hoveredListingId: string | null;
+  onHover: (listingId: string) => void;
+  onLeave: (listingId: string) => void;
+  onSelect: (listingId: string) => void;
+}) {
+  const [renderVersion, setRenderVersion] = useState(0);
 
-  const html = `
-    <div class="${classes}">
-      <span class="pill-price">CHF ${price}</span>
-      ${score && score > 80 ? `<span class="pill-dot"></span>` : ""}
-    </div>
-  `;
-
-  return divIcon({
-    className: "feed-map-pill-shell",
-    html: html,
-    iconSize: [64, 32],
-    iconAnchor: [32, 16],
+  const map = useMapEvents({
+    move: () => setRenderVersion((v) => v + 1),
+    zoom: () => setRenderVersion((v) => v + 1),
+    resize: () => setRenderVersion((v) => v + 1),
   });
+
+  const markerPoints = useMemo(() => {
+    void renderVersion;
+    return listings.reduce<Record<string, { x: number; y: number }>>((acc, listing) => {
+      const coords = listingCoords[listing.id];
+      if (!coords) return acc;
+      const point = map.latLngToContainerPoint(coords);
+      acc[listing.id] = { x: point.x, y: point.y };
+      return acc;
+    }, {});
+  }, [listings, listingCoords, map, renderVersion]);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[800]">
+      {listings.map((listing) => {
+        const marker = markerPoints[listing.id];
+        if (!marker) return null;
+
+        const isHovered = hoveredListingId === listing.id;
+        const isActive = activeListingId === listing.id;
+        const score = (listing as any).score;
+
+        return (
+          <div
+            key={listing.id}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{
+              left: marker.x,
+              top: marker.y,
+              zIndex: isActive ? 40 : isHovered ? 30 : 20,
+            }}
+          >
+            {(isHovered || isActive) && (
+              <Card className="pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 w-56 -translate-x-1/2 border-border/70 bg-popover/95 py-0 shadow-xl">
+                <CardContent className="p-3">
+                  <p className="truncate text-xs font-semibold">{listing.title}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {listing.location.neighborhood}, {listing.location.city}
+                  </p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+                    <Banknote className="size-3" /> CHF {listing.room.price}/mo
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            <button
+              type="button"
+              onMouseEnter={() => onHover(listing.id)}
+              onMouseLeave={() => onLeave(listing.id)}
+              onClick={() => onSelect(listing.id)}
+              className={cn(
+                "feed-map-pill pointer-events-auto",
+                isActive && "feed-map-pill--active",
+                isHovered && "feed-map-pill--hovered"
+              )}
+              aria-label={`Open ${listing.title}`}
+            >
+              <span className="pill-price">CHF {listing.room.price}</span>
+              {score && score > 80 && <span className="pill-dot" />}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function FeedMap({
@@ -120,11 +188,12 @@ export function FeedMap({
                     }}
                     onMouseEnter={() => setHoveredListingId(listing.id)}
                     onMouseLeave={() => setHoveredListingId(null)}
-                    className={`group w-full rounded-xl border p-3 text-left transition-all duration-200 ${
+                    className={cn(
+                      "group w-full rounded-xl border p-3 text-left transition-all duration-200",
                       isActive
                         ? "border-primary bg-primary/5 shadow-sm"
                         : "border-border/60 bg-card hover:border-primary/40 hover:shadow-md"
-                    }`}
+                    )}
                   >
                     <div className="flex items-center justify-between gap-3">
                        <div className="flex-1 min-w-0">
@@ -139,7 +208,7 @@ export function FeedMap({
                         </span>
                         {score > 0 && (
                           <div className="flex items-center gap-1">
-                            <Sparkles className={`size-2.5 ${score > 80 ? "text-primary" : "text-muted-foreground/50"}`} />
+                            <Sparkles className={cn("size-2.5", score > 80 ? "text-primary" : "text-muted-foreground/50")} />
                             <span className="text-[10px] font-bold text-muted-foreground">{score}%</span>
                           </div>
                         )}
@@ -223,28 +292,22 @@ export function FeedMap({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-
-          {listings.map((listing) => {
-            const isHovered = hoveredListingId === listing.id;
-            const isActive = activeListingId === listing.id;
-
-            return (
-              <Marker
-                key={listing.id}
-                position={listingCoords[listing.id]}
-                icon={markerIcon(listing.room.price, isActive, isHovered, listing.score)}
-                zIndexOffset={isActive ? 1800 : isHovered ? 1400 : 0}
-                eventHandlers={{
-                  mouseover: () => setHoveredListingId(listing.id),
-                  mouseout: () => setHoveredListingId(null),
-                  click: () => {
-                    setActiveListingId(listing.id);
-                    setIsDetailOpen(true);
-                  },
-                }}
-              />
-            );
-          })}
+          <MapMarkerOverlay
+            listings={listings}
+            listingCoords={listingCoords}
+            activeListingId={activeListingId}
+            hoveredListingId={hoveredListingId}
+            onHover={setHoveredListingId}
+            onLeave={(listingId) =>
+              setHoveredListingId((current) =>
+                current === listingId ? null : current
+              )
+            }
+            onSelect={(listingId) => {
+              setActiveListingId(listingId);
+              setIsDetailOpen(true);
+            }}
+          />
         </MapContainer>
       </div>
 
@@ -252,14 +315,6 @@ export function FeedMap({
         .leaflet-pane,
         .leaflet-marker-pane {
           z-index: 700;
-        }
-
-        .feed-map-pill-shell {
-          background: transparent !important;
-          border: none !important;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
         .feed-map-pill {
